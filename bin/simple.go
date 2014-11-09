@@ -18,22 +18,10 @@ var (
 	numMsg  = flag.Int("numMsg", 3, "number of messages sent by each client per second")
 )
 
-type MsgType int
-
-const (
-	PUB MsgType = 0
-	SUB MsgType = 1
-)
-
-type MsgInfo struct {
-	msg_id    string
-	timestamp time.Time
-	msg_type  MsgType
-}
-
-type Message struct {
+type SentMsg struct {
+	DeviceId string
+	MsgId    string
 	SentAt   time.Time
-	MsgCount int
 }
 
 type Device struct {
@@ -44,7 +32,7 @@ type Device struct {
 }
 
 func (d *Device) OnMessage(buf *bytes.Buffer) {
-	var msg Message
+	var msg SentMsg
 	utils.DecodeGob(buf, &msg)
 	fmt.Println(time.Now().Sub(msg.SentAt))
 }
@@ -72,11 +60,11 @@ func worker(wg *sync.WaitGroup) {
 	go device.sub_client.Subscribe(device.id, device.OnMessage)
 
 	publishTicker := time.NewTicker(time.Second * 1)
-	msg_count := 0
 
-	for t := range publishTicker.C {
-		msg_count += 1
-		device.pub_client.Publish(device.id, &Message{t, msg_count})
+	for _ = range publishTicker.C {
+		msg := &SentMsg{device.id, uuid.New(), time.Now()}
+		device.pub_client.Publish(device.id, msg)
+		// TODO - log sent
 	}
 }
 
