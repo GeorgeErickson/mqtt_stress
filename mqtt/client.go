@@ -10,13 +10,14 @@ import (
 )
 
 type MessageHandler func(buf *bytes.Buffer)
+type OnConnectionLost func(reason error)
 
 type Client struct {
-	client *paho.MqttClient
+	PahoClient *paho.MqttClient
 }
 
 func (c *Client) Start() {
-	_, err := c.client.Start()
+	_, err := c.PahoClient.Start()
 	if err != nil {
 		log.Print(err)
 	}
@@ -26,7 +27,7 @@ func (c *Client) Publish(topic string, payload interface{}) {
 	var msg bytes.Buffer
 	err := gob.NewEncoder(&msg).Encode(payload)
 	utils.CheckErrFatal(err)
-	c.client.Publish(paho.QOS_ONE, topic, msg.Bytes())
+	c.PahoClient.Publish(paho.QOS_ONE, topic, msg.Bytes())
 }
 
 func (c *Client) Subscribe(topic string, cb MessageHandler) {
@@ -37,12 +38,13 @@ func (c *Client) Subscribe(topic string, cb MessageHandler) {
 	}
 	topicFilter, err := paho.NewTopicFilter(topic, 1)
 	utils.CheckErrFatal(err)
-	c.client.StartSubscription(on_msg, topicFilter)
+	c.PahoClient.StartSubscription(on_msg, topicFilter)
 }
 
-func CreateClient(id string, host string, port string) *Client {
+func CreateClient(id string, host string, port string, cb OnConnectionLost) *Client {
 	on_lost := func(client *paho.MqttClient, reason error) {
 		fmt.Println(reason)
+		cb(reason)
 	}
 	addr := fmt.Sprintf("tcp://%s:%s", host, port)
 	opts := paho.NewClientOptions().AddBroker(addr).SetClientId(id).SetOnConnectionLost(on_lost)
