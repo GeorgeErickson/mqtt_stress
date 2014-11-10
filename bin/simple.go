@@ -16,7 +16,7 @@ import (
 var (
 	host       = flag.String("host", "mqtt.gee.io", "MQTT host")
 	port       = flag.String("port", "1883", "MQTT port")
-	numDevices = flag.Int("n", 1000, "number of devices to simulate")
+	numDevices = flag.Int("n", 10000, "number of devices to simulate")
 )
 
 type Benchmark struct {
@@ -98,6 +98,7 @@ func NewDevice() (*Device, error) {
 	}
 	on_lost := func(reason error) {
 		fmt.Println(reason)
+		log.Fatal(reason)
 		atomic.AddUint64(&device.lostCount, 1)
 	}
 	device.pub = mqtt.CreateClient("pub-"+id, *host, *port, on_lost)

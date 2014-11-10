@@ -47,7 +47,7 @@ func CreateClient(id string, host string, port string, cb OnConnectionLost) *Cli
 		cb(reason)
 	}
 	addr := fmt.Sprintf("tcp://%s:%s", host, port)
-	opts := paho.NewClientOptions().AddBroker(addr).SetClientId(id).SetOnConnectionLost(on_lost)
+	opts := paho.NewClientOptions().AddBroker(addr).SetClientId(id).SetOnConnectionLost(on_lost).SetCleanSession(true)
 
 	client := &Client{paho.NewClient(opts)}
 	return client
