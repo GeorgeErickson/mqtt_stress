@@ -7,16 +7,16 @@ import (
 	"fmt"
 	"github.com/GeorgeErickson/mqtt_stress/mqtt"
 	"github.com/GeorgeErickson/mqtt_stress/utils"
-	// "sync"
 	"log"
+	"sync"
 	"sync/atomic"
 	"time"
 )
 
 var (
-	host       = flag.String("host", "mqtt.gee.io", "MQTT host")
+	host       = flag.String("host", "146.148.45.116", "MQTT host")
 	port       = flag.String("port", "1883", "MQTT port")
-	numDevices = flag.Int("n", 10000, "number of devices to simulate")
+	numDevices = flag.Int("n", 4000, "number of devices to simulate")
 )
 
 type Benchmark struct {
@@ -29,8 +29,11 @@ func NewBenchmark() *Benchmark {
 }
 
 func (bench *Benchmark) Start() {
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go bench.PrintMetrics()
 	bench.CreateDevices()
+	wg.Wait()
 }
 
 func (bench *Benchmark) PrintMetrics() {
@@ -40,7 +43,7 @@ func (bench *Benchmark) PrintMetrics() {
 }
 
 func (bench *Benchmark) CreateDevices() {
-	tickChan := time.NewTicker(time.Millisecond * 100)
+	tickChan := time.NewTicker(time.Millisecond * 10)
 
 	i := 0
 	errCount := uint64(0)
